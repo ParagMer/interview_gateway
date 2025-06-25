@@ -1,8 +1,11 @@
-import requests
+import requests, os
+from dotenv import load_dotenv
 
-GOOGLE_API_KEY = 'AIzaSyDnq9F1sQE1v-ROcz5Sh54jn0mdqspOXHs'
-CONTACT_EMAIL = "paragmerpm49@gmail.com"
-GEMINI_KEY = "AIzaSyDhiAA5EcBD12spA_SS3fegQE850GuFgjo"
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+CONTACT_EMAIL = os.getenv("CONTACT_EMAIL")
+GEMINI_KEY = os.getenv("GEMINI_KEY")
 
 compare_emission_factors = {"diesel": 1.0, "petrol": 1.05, "electric": 0.20}
 

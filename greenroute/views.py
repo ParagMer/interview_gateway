@@ -51,7 +51,7 @@ class CalculateEmissions(View):
 
 @method_decorator(xframe_options_exempt, name='dispatch')
 class ViewMap(View):
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         return render(request, "html/route_map.html")
 
 @method_decorator(csrf_exempt, name='dispatch')

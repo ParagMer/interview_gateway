@@ -2,10 +2,12 @@
 *.pyc
 __pycache__/
 *.sqlite3
+.vscode
 
 # Environment folders
 env/
 venv/
+.env/
 
 # Django migration files (optional)
 **/migrations/
