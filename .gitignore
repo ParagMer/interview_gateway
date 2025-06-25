@@ -1,13 +1,31 @@
-# Python & Django ignores
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.sqlite3
-.vscode
+*.py[cod]
+*$py.class
 
-# Environment folders
+# SQLite database
+*.sqlite3
+
+# VS Code config
+.vscode/
+
+# Environment variables
+.env
+
+# Python virtual environments
 env/
 venv/
-.env/
 
-# Django migration files (optional)
-**/migrations/
+# Django migrations (optional: keep __init__.py if needed)
+**/migrations/*.pyc
+**/migrations/__pycache__/
+**/migrations/*.py
+
+# Pytest / Coverage / Logs
+htmlcov/
+.coverage
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
