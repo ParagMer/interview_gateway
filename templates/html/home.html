@@ -1,0 +1,174 @@
+<!-- templates/home.html -->
+{% extends 'html/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">GreenRoute Trip Calculator</h2>
+
+  <form id="tripForm" method="POST" action="{% url 'route_map_view' %}">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6">
+        <label for="start">Start Address</label>
+        <input type="text" class="form-control" id="start" name="start" placeholder="12.9716, 77.5946" required>
+      </div>
+      <div class="col-md-6">
+        <label for="end">End Address</label>
+        <input type="text" class="form-control" id="end" name="end" placeholder="13.0827, 80.2707" required>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <label for="vehicle_type">Vehicle Type</label>
+        <select class="form-control" id="vehicle_type" name="vehicle_type" required>
+          <option value="truck">Truck</option>
+          <option value="car">Car</option>
+          <option value="bike">Bike</option>
+          <option value="flight">Flight</option>
+          <option value="walk">Walk</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label for="fuel_type">Fuel Type</label>
+        <select class="form-control" id="fuel_type" name="fuel_type" required>
+          <option value="diesel">Diesel B7</option>
+          <option value="petrol">Petrol</option>
+          <option value="electric">Electric</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label for="load_weight">Load Weight (in tons)</label>
+        <input type="number" class="form-control" id="load_weight" name="load_weight" step="0.01" required>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <label for="terrain">Terrain</label>
+        <select class="form-control" id="terrain" name="terrain" required>
+          <option value="flat">Flat</option>
+          <option value="hilly">Hilly</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label for="road_type">Road Type</label>
+        <select class="form-control" id="road_type" name="road_type" required>
+          <option value="highway">Highway</option>
+          <option value="city">City</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-success mt-4" id="fetchBtn">Fetch Trip Data</button>
+  </form>
+
+  <div id="mapContainer" class="mt-5">
+    <h4>Route Map</h4>
+    <div id="map" style="height: 400px;"></div>
+  </div>
+
+  <div id="tripSummary" class="mt-5">
+    <h4>Trip Summary</h4>
+    <ul>
+      <li><strong>Vehicle:</strong> <span id="vehicle">--</span></li>
+      <li><strong>Fuel:</strong> <span id="fuel">--</span></li>
+      <li><strong>Total Distance:</strong> <span id="totalDistance">--</span> km</li>
+      <li><strong>Total Hours:</strong> <span id="totalHours">--</span></li>
+      <li><strong>TTW Emissions:</strong> <span id="ttw">--</span> kg</li>
+      <li><strong>WTT Emissions:</strong> <span id="wtt">--</span> kg</li>
+      <li><strong>WtW Emissions:</strong> <span id="wtw">--</span> kg</li>
+    </ul>
+  </div>
+
+  <div id="cityBreakdownTable" class="mt-5">
+    <h4>City-wise Emissions Breakdown</h4>
+  </div>
+</div>
+
+<script>
+    const mapURL = "{% url 'view_map' %}";
+    document.getElementById('fetchBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const payload = {
+            start: document.getElementById('start').value,
+            end: document.getElementById('end').value,
+            vehicle_type: document.getElementById('vehicle_type').value,
+            fuel_type: document.getElementById('fuel_type').value,
+            load_weight_ton: document.getElementById('load_weight').value,
+            road_type: document.getElementById('road_type').value,
+            terrain: document.getElementById('terrain').value,
+        };
+
+        fetch("{% url 'route_map_view' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+
+            // Inject map
+            document.getElementById("mapContainer").innerHTML = `
+                <h4>Route Map</h4>
+                <iframe src="${mapURL}" width="100%" height="450px" frameborder="0"></iframe>
+            `;
+
+            // Fill trip summary
+            document.getElementById("vehicle").textContent = payload.vehicle_type;
+            document.getElementById("fuel").textContent = payload.fuel_type;
+            document.getElementById("totalDistance").textContent = data.distance_km;
+            document.getElementById("totalHours").textContent = data.duration_hours;
+            document.getElementById("ttw").textContent = data.TTW_kg;
+            document.getElementById("wtt").textContent = data.WTT_kg;
+            document.getElementById("wtw").textContent = data.WtW_kg;
+
+            // City breakdown table
+            const breakdown = data.city_breakdown;
+            if (breakdown && breakdown.length > 0) {
+                let tableHTML = `
+                    <table class="table table-bordered table-striped mt-3">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>City</th>
+                                <th>Distance (km)</th>
+                                <th>TTW (kg)</th>
+                                <th>WTT (kg)</th>
+                                <th>WtW (kg)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                breakdown.forEach(item => {
+                    tableHTML += `
+                        <tr>
+                            <td>${item.city}</td>
+                            <td>${item.distance_km}</td>
+                            <td>${item.TTW_kg}</td>
+                            <td>${item.WTT_kg}</td>
+                            <td>${item.WtW_kg}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += `</tbody></table>`;
+                document.getElementById("cityBreakdownTable").innerHTML = tableHTML;
+            }
+
+        }).catch(error => {
+            console.error("Error:", error);
+            alert("Failed to fetch trip data.");
+        });
+    });
+</script>
+{% endblock %}

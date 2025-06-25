@@ -1,0 +1,11 @@
+# Python & Django ignores
+*.pyc
+__pycache__/
+*.sqlite3
+
+# Environment folders
+env/
+venv/
+
+# Django migration files (optional)
+**/migrations/
